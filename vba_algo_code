@@ -1,0 +1,1225 @@
+Rem Attribute VBA_ModuleType=VBAModule
+Option VBASupport 1
+Sub krog()
+' Makro bo pregledal v kolikor je v predtekmovalnih skupinah prišlo do kroga.
+' krog se bo pregledal na dveh nivojih in sicer v primeru treh oziroma štirih igralcev.
+' Možni imamo dve situaciji: 4 igralci
+' - po dva igralca imata enako število zmag in porazov, prevlada medsebojna
+' situacija za 3 igralce:
+' - vsi trije igralci imajo enako število zmag in porazov. v tem primeru se šteje ali upošteva ?
+' Makro bo moral sam zaznati v katerih tabelah je prišlo do kroga. Smiselno bi bilo uporabiti proces eliminacije, da ne bi bilo potrebo
+' ponavljat kode za vsako tabelo posebej -  je lažje in sigurno, ampak koda je potratna. nevem, mogoče je bolje narediti za začetek
+' nekaj delujočega in kasneje razmišljat, kako kodo optimizirat.
+' NOTE: v kolikor se odstrani piko pri metsu, bo omenjena rešitev delovala! Ampak, vprašđaj pri Gaju, če lahko ali ne!
+Dim currentSht As Worksheet
+Dim testPos1, testPos2, testPos3, testPos4 As Integer
+Dim test2 As Integer
+Dim pos1, pos2, pos3 As Integer
+Dim pos4 As Integer
+Dim i As Integer
+Dim tableRow As Integer
+Dim noTable, countT As Integer
+Dim tempPos1, tempPos2, tempPos3, tempPos4 As Integer
+Dim dummy As Boolean
+' Dim players As Integer
+
+Set currentSht = Sheets("Predtekmovanje")
+'For best out of 32 set the number of tables to 16 (change as the worksheet changes)
+noTables = 4
+tableRow = 4
+
+' Testing code
+' test = "Hello World"
+'MsgBox currentSht.Range("AH6").Value + currentSht.Range("AH8").Value
+
+'If currentSht.Range("AH31").Value = vbNullString Then
+'    MsgBox "Pejdi se solit"
+'End If
+
+'To loop trough all the tables
+For i = 1 To noTables
+    'Remove the dot from the string
+    MsgBox "Zdaj delam tabelo " & i
+    pos1 = tableRow + 2
+    pos2 = tableRow + 4
+    pos3 = tableRow + 6
+    pos4 = tableRow + 8
+
+    tempPos1 = CInt(Left(currentSht.Range("AH" & pos1).Value, 1))
+    tempPos2 = CInt(Left(currentSht.Range("AH" & pos2).Value, 1))
+    If currentSht.Range("AH" & pos3).Value = vbNullString Then
+    Else
+        tempPos3 = CInt(Left(currentSht.Range("AH" & pos3).Value, 1))
+    End If
+    'Check if last entry empty
+    If currentSht.Range("AH" & pos4).Value = vbNullString Then
+    Else
+        tempPos4 = CInt(Left(currentSht.Range("AH" & pos4).Value, 1))
+    End If
+    
+    ' Check if empty on position 4...beware on position 3 can also be empty
+    If currentSht.Range("AH" & pos3).Value = vbNullString Then
+    ElseIf currentSht.Range("AH" & pos4).Value = vbNullString Then
+        If tempPos1 + tempPos2 + tempPos3 = 3 Then
+            dummy = False
+            players = 3
+            Call do3(tableRow, players, tempPos1, tempPos2, tempPos3, pos1, pos2, pos3, i, dummy)
+        ElseIf tempPos1 + tempPos2 + tempPos3 = 6 Then
+        End If
+    Else
+        If tempPos1 + tempPos2 + tempPos3 + tempPos4 = 8 Then
+            If (tempPos1 = tempPos2 = tempPos3) Or (tempPos1 = tempPos2 = tempPos4) Or (tempPos2 = tempPos3 = tempPos4) Then
+            ' 1-3 position
+                dummy = False
+                players = 4
+                If tempPos1 + tempPos2 + tempPos3 = 6 Then
+                    Call do3(tableRow, players, tempPos1, tempPos2, tempPos3, pos1, pos2, pos3, i, dummy)
+                ElseIf tempPos1 + tempPos2 + tempPos4 = 6 Then
+                    Call do3(tableRow, players, tempPos1, tempPos2, tempPos4, pos1, pos2, pos4, i, dummy)
+                ElseIf tempPos2 + temPos3 + tempPos4 = 6 Then
+                    Call do3(tableRow, players, tempPos2, tempPos3, tempPos4, pos2, pos3, pos4, i, dummy)
+                End If
+            Else
+                Call do4(tempPos1, tempPos2, tempPos3, tempPos4, pos1, pos2, pos3, pos4)
+            End If
+        ElseIf tempPos1 + tempPos2 + tempPos3 + tempPos4 = 7 Then
+            ' position
+            players = 4
+            If tempPos1 + tempPos2 + tempPos3 = 6 And tempPos1 = 2 And tempPos2 = 2 And tempPos3 = 2 Then
+                dummy = True
+                Call do3(tableRow, players, tempPos1, tempPos2, tempPos3, pos1, pos2, pos3, i, dummy)
+            ElseIf tempPos1 + tempPos2 + tempPos4 = 6 And tempPos1 = 2 And tempPos2 = 2 And tempPos4 = 2 Then
+                dummy = True
+                Call do3(tableRow, players, tempPos1, tempPos2, tempPos4, pos1, pos2, pos4, i, dummy)
+            ElseIf tempPos2 + tempPos3 + tempPos4 = 6 And tempPos2 = 2 And tempPos3 = 2 And tempPos4 = 2 Then
+                dummy = True
+                Call do3(tableRow, players, tempPos2, tempPos3, tempPos4, pos2, pos3, pos4, i, dummy)
+            ElseIf tempPos1 + tempPos2 + tempPos3 = 3 Then
+                dummy = False
+                Call do3(tableRow, players, tempPos1, tempPos2, tempPos3, pos1, pos2, pos3, i, dummy)
+            ElseIf tempPos1 + tempPos2 + tempPos4 = 3 Then
+                dummy = False
+                Call do3(tableRow, players, tempPos1, tempPos2, tempPos4, pos1, pos2, pos4, i, dummy)
+            ElseIf tempPos2 + tempPos3 + tempPos4 = 3 Then
+                dummy = False
+                Call do3(tableRow, players, tempPos2, tempPos3, tempPos4, pos2, pos3, pos4, i, dummy)
+            End If
+        ElseIf tempPos1 + tempPos2 + tempPos3 + tempPos4 = 10 Then
+        End If
+    End If
+    tableRow = tableRow + 19
+Next i
+
+End Sub
+Sub do3(tableRow, play, checkPos1, checkPos2, checkPos3, checkRow1, checkRow2, checkRow3, table As Integer, dummy As Boolean)
+
+Dim currentSht As Worksheet
+Dim position1, position2, position3 As String
+Dim mRatio1, mRatio2, mRatio3 As Double
+
+Set currentSht = Sheets("Predtekmovanje")
+
+' Level 1 - check for sets
+
+mRatio1 = currentSht.Range("AB" & checkRow1).Value / currentSht.Range("AD" & checkRow1).Value
+mRatio2 = currentSht.Range("AB" & checkRow2).Value / currentSht.Range("AD" & checkRow2).Value
+mRatio3 = currentSht.Range("AB" & checkRow3).Value / currentSht.Range("AD" & checkRow3).Value
+
+If dummy = True Then
+    If (mRatio1 = mRatio2) And (mRatio2 = mRatio3) Then
+        ' Go to calculate on Level 2 (points)
+        Call doPointIn4(tableRow, checkRow1, checkRow2, checkRow3, table, dummy)
+    ElseIf (mRatio1 > mRatio2) And (mRatio2 > mRatio3) Then
+        position1 = "2."
+        position2 = "3."
+        position3 = "4."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (mRatio1 > mRatio2) And (mRatio2 < mRatio3) Then
+        position1 = "2."
+        position2 = "3."
+        position3 = "4."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (mRatio2 > mRatio1) And (mRatio1 > mRatio3) Then
+        position1 = "3."
+        position2 = "2."
+        position3 = "4."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (mRatio2 > mRatio3) And (mRatio3 > mRatio1) Then
+        position1 = "3."
+        position2 = "4."
+        position3 = "2."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (mRatio3 > mRatio1) And (mRatio1 > mRatio2) Then
+        position1 = "4."
+        position2 = "2."
+        position3 = "3."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (mRatio3 > mRatio2) And (mRatio2 > mRatio1) Then
+        position1 = "4."
+        position2 = "3."
+        position3 = "2."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    End If
+ElseIf dummy = False Then
+    If (mRatio1 = mRatio2) And (mRatio2 = mRatio3) Then
+        ' Go to calculate on Level 2 (points)
+        If play = 3 Then
+            Call doPoint(checkRow1, checkRow2, checkRow3, table)
+        ElseIf play = 4 Then
+            Call doPointIn4(tableRow, checkRow1, checkRow2, checkRow3, table, dummy)
+        End If
+    ElseIf (mRatio1 > mRatio2) And (mRatio2 > mRatio3) Then
+        position1 = "1."
+        position2 = "2."
+        position3 = "3."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (mRatio1 > mRatio2) And (mRatio2 < mRatio3) Then
+        position1 = "1."
+        position2 = "3."
+        position3 = "2."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (mRatio2 > mRatio1) And (mRatio1 > mRatio3) Then
+        position1 = "2."
+        position2 = "1."
+        position3 = "3."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (mRatio2 > mRatio3) And (mRatio3 > mRatio1) Then
+        position1 = "2."
+        position2 = "3."
+        position3 = "1."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (mRatio3 > mRatio1) And (mRatio1 > mRatio2) Then
+        position1 = "3."
+        position2 = "1."
+        position3 = "2."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (mRatio3 > mRatio2) And (mRatio2 > mRatio1) Then
+        position1 = "3."
+        position2 = "2."
+        position3 = "1."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    End If
+End If
+
+End Sub
+Sub doPointIn4(tableRow, checkRow1, checkRow2, checkRow3, table As Integer, dummy As Boolean)
+
+Dim currentSht As Worksheet
+Dim position1, position2, position3 As String
+Dim pRatio1, pRatio2, pRatio3 As Double
+Dim pWin1, pWin2, pWin3 As Integer
+Dim pLoss1, pLoss2, pLoss3 As Integer
+Dim game1, game2, game3 As Integer
+Dim pLoc1, pLoc2, pLoc3 As Integer
+
+Set currentSht = Sheets("Predtekmovanje")
+
+' Check position for player one
+If checkRow1 - tableRow = 2 Then
+    pLoc1 = 1
+    game1 = checkRow1 + 10
+    game2 = checkRow1 + 13
+    game3 = checkRow1 + 15
+    pRatio1 = getRatio(pLoc1, game1, game2, game3)
+ElseIf checkRow1 - tableRow = 4 Then
+    pLoc1 = 2
+    game1 = checkRow1 + 9
+    game2 = checkRow1 + 11
+    game3 = checkRow1 + 12
+    pRatio1 = getRatio(pLoc1, game1, game2, game3)
+ElseIf checkRow1 - tableRow = 6 Then
+    pLoc1 = 3
+    game1 = checkRow1 + 7
+    game2 = checkRow1 + 8
+    game3 = checkRow1 + 11
+    pRatio1 = getRatio(pLoc1, game1, game2, game3)
+ElseIf checkRow1 - tableRow = 8 Then
+    pLoc1 = 4
+    game1 = checkRow1 + 4
+    game2 = checkRow1 + 6
+    game3 = checkRow1 + 8
+    pRatio1 = getRatio(pLoc1, game1, game2, game3)
+End If
+
+' Check position for player 2
+If checkRow2 - tableRow = 2 Then
+    pLoc2 = 1
+    game1 = checkRow2 + 10
+    game2 = checkRow2 + 13
+    game3 = checkRow2 + 15
+    pRatio2 = getRatio(pLoc2, game1, game2, game3)
+ElseIf checkRow2 - tableRow = 4 Then
+    pLoc2 = 2
+    game1 = checkRow2 + 9
+    game2 = checkRow2 + 11
+    game3 = checkRow2 + 12
+    pRatio2 = getRatio(pLoc2, game1, game2, game3)
+ElseIf checkRow2 - tableRow = 6 Then
+    pLoc2 = 3
+    game1 = checkRow2 + 7
+    game2 = checkRow2 + 8
+    game3 = checkRow2 + 11
+    pRatio2 = getRatio(pLoc2, game1, game2, game3)
+ElseIf checkRow2 - tableRow = 8 Then
+    pLoc2 = 4
+    game1 = checkRow2 + 4
+    game2 = checkRow2 + 6
+    game3 = checkRow2 + 8
+    pRatio2 = getRatio(pLoc2, game1, game2, game3)
+End If
+' Check position for player three
+If checkRow3 - tableRow = 2 Then
+    pLoc3 = 1
+    game1 = checkRow3 + 10
+    game2 = checkRow3 + 13
+    game3 = checkRow3 + 15
+    pRatio3 = getRatio(pLoc3, game1, game2, game3)
+ElseIf checkRow3 - tableRow = 4 Then
+    pLoc3 = 2
+    game1 = checkRow3 + 9
+    game2 = checkRow3 + 11
+    game3 = checkRow3 + 12
+    pRatio3 = getRatio(pLoc3, game1, game2, game3)
+ElseIf checkRow3 - tableRow = 6 Then
+    pLoc3 = 3
+    game1 = checkRow3 + 7
+    game2 = checkRow3 + 8
+    game3 = checkRow3 + 11
+    pRatio3 = getRatio(pLoc3, game1, game2, game3)
+ElseIf checkRow3 - tableRow = 8 Then
+    pLoc3 = 4
+    game1 = checkRow3 + 4
+    game2 = checkRow3 + 6
+    game3 = checkRow3 + 8
+    pRatio3 = getRatio(pLoc3, game1, game2, game3)
+End If
+
+MsgBox " pRatio1 " & pRatio1 & " pRatio2 " & pRatio2 & " pRatio3 " & pRatio3
+
+' Assign position
+If dummy = True Then
+    If (pRatio1 = pRatio2) And (pRatio2 = pRatio3) Then
+        ' Go to calculate on Level 2 (points)
+        MsgBox "Players in table " & table & " have same amount of points!"
+    ElseIf (pRatio1 > pRatio2) And (pRatio2 > pRatio3) Then
+        position1 = "2."
+        position2 = "3."
+        position3 = "4."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (pRatio1 > pRatio2) And (pRatio2 < pRatio3) Then
+        position1 = "2."
+        position2 = "4."
+        position3 = "3."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (pRatio2 > pRatio1) And (pRatio1 > pRatio3) Then
+        position1 = "3."
+        position2 = "2."
+        position3 = "4."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (pRatio2 > pRatio3) And (pRatio3 > pRatio1) Then
+        position1 = "4."
+        position2 = "2."
+        position3 = "3."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (pRatio3 > pRatio1) And (pRatio1 > pRatio2) Then
+        position1 = "3."
+        position2 = "4."
+        position3 = "2."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (pRatio3 > pRatio2) And (pRatio2 > pRatio1) Then
+        position1 = "4."
+        position2 = "3."
+        position3 = "2."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    End If
+ElseIf dummy = False Then
+    If (pRatio1 = pRatio2) And (pRatio2 = pRatio3) Then
+        MsgBox "Players in table " & table & " have same amount of points!"
+    ElseIf (pRatio1 > pRatio2) And (pRatio2 > pRatio3) Then
+        position1 = "1."
+        position2 = "2."
+        position3 = "3."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (pRatio1 > pRatio2) And (pRatio2 < pRatio3) Then
+        position1 = "1."
+        position2 = "3."
+        position3 = "2."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (pRatio2 > pRatio1) And (pRatio1 > pRatio3) Then
+        position1 = "2."
+        position2 = "1."
+        position3 = "3."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (pRatio2 > pRatio3) And (pRatio3 > pRatio1) Then
+        position1 = "3."
+        position2 = "1."
+        position3 = "2."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (pRatio3 > pRatio1) And (pRatio1 > pRatio2) Then
+        position1 = "2."
+        position2 = "3."
+        position3 = "1."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    ElseIf (pRatio3 > pRatio2) And (pRatio2 > pRatio1) Then
+        position1 = "3."
+        position2 = "2."
+        position3 = "1."
+        currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+        currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+        currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+    End If
+End If
+
+End Sub
+
+Public Function getRatio(pLoc, game1, game2, game3 As Integer) As Double
+Dim currentSht As Worksheet
+Dim pWin1, pWin2, pWin3 As Integer
+Dim pLoss1, pLoss2, pLoss3 As Integer
+
+Set currentSht = Sheets("Predtekmovanje")
+
+If pLoc = 1 Then
+    ' Player loc1 game one
+    If (currentSht.Range("AB" & game1).Value = vbNullString) And (currentSht.Range("AE" & game1).Value = vbNullString) Then
+        pWin1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value
+        pLoss1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value
+    ElseIf currentSht.Range("AE" & game1).Value = vbNullString Then
+        pWin1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value + _
+                currentSht.Range("AB" & game1).Value
+        pLoss1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value + _
+                currentSht.Range("AD" & game1).Value
+    Else
+        pWin1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value + _
+                currentSht.Range("AB" & game1).Value + _
+                currentSht.Range("AE" & game1).Value
+        pLoss1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value + _
+                currentSht.Range("AD" & game1).Value + _
+                currentSht.Range("AG" & game1).Value
+    End If
+    ' Player loc1 game two
+    If (currentSht.Range("AB" & game2).Value = vbNullString) And (currentSht.Range("AE" & game2).Value = vbNullString) Then
+        pWin2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value
+        pLoss2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value
+    ElseIf currentSht.Range("AE" & game2).Value = vbNullString Then
+        pWin2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value + _
+                currentSht.Range("AB" & game2).Value
+        pLoss2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value + _
+                currentSht.Range("AD" & game2).Value
+    Else
+        pWin2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value + _
+                currentSht.Range("AB" & game2).Value + _
+                currentSht.Range("AE" & game2).Value
+        pLoss2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value + _
+                currentSht.Range("AD" & game2).Value + _
+                currentSht.Range("AG" & game2).Value
+    End If
+    ' Game three for player on loc1
+    If (currentSht.Range("AB" & game3).Value = vbNullString) And (currentSht.Range("AE" & game3).Value = vbNullString) Then
+        pLoss3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value
+        pWin3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value
+    ElseIf currentSht.Range("AE" & game3).Value = vbNullString Then
+        pLoss3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value + _
+                currentSht.Range("AB" & game3).Value
+        pWin3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value + _
+                currentSht.Range("AD" & game3).Value
+    Else
+        pLoss3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value + _
+                currentSht.Range("AB" & game3).Value + _
+                currentSht.Range("AE" & game3).Value
+        pWin3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value + _
+                currentSht.Range("AD" & game3).Value + _
+                currentSht.Range("AG" & game3).Value
+    End If
+    getRatio = (pWin1 + pWin2 + pWin3) / (pLoss1 + pLoss2 + pLoss3)
+    Exit Function
+ElseIf pLoc = 2 Then
+    If (currentSht.Range("AB" & game1).Value = vbNullString) And (currentSht.Range("AE" & game1).Value = vbNullString) Then
+        pWin1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value
+        pLoss1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value
+    ElseIf currentSht.Range("AE" & game1).Value = vbNullString Then
+        pWin1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value + _
+                currentSht.Range("AB" & game1).Value
+        pLoss1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value + _
+                currentSht.Range("AD" & game1).Value
+    Else
+        pWin1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value + _
+                currentSht.Range("AB" & game1).Value + _
+                currentSht.Range("AE" & game1).Value
+        pLoss1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value + _
+                currentSht.Range("AD" & game1).Value + _
+                currentSht.Range("AG" & game1).Value
+    End If
+    ' Player loc1 game two
+    If (currentSht.Range("AB" & game2).Value = vbNullString) And (currentSht.Range("AE" & game2).Value = vbNullString) Then
+        pLoss2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value
+        pWin2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value
+    ElseIf currentSht.Range("AE" & game2).Value = vbNullString Then
+        pLoss2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value + _
+                currentSht.Range("AB" & game2).Value
+        pWin2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value + _
+                currentSht.Range("AD" & game2).Value
+    Else
+        pLoss2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value + _
+                currentSht.Range("AB" & game2).Value + _
+                currentSht.Range("AE" & game2).Value
+        pWin2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value + _
+                currentSht.Range("AD" & game2).Value + _
+                currentSht.Range("AG" & game2).Value
+    End If
+    ' Game three for player on loc1
+    If (currentSht.Range("AB" & game3).Value = vbNullString) And (currentSht.Range("AE" & game3).Value = vbNullString) Then
+        pWin3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value
+        pLoss3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value
+    ElseIf currentSht.Range("AE" & game3).Value = vbNullString Then
+        pWin3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value + _
+                currentSht.Range("AB" & game3).Value
+        pLoss3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value + _
+                currentSht.Range("AD" & game3).Value
+    Else
+        pWin3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value + _
+                currentSht.Range("AB" & game3).Value + _
+                currentSht.Range("AE" & game3).Value
+        pLoss3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value + _
+                currentSht.Range("AD" & game3).Value + _
+                currentSht.Range("AG" & game3).Value
+    End If
+    getRatio = (pWin1 + pWin2 + pWin3) / (pLoss1 + pLoss2 + pLoss3)
+    Exit Function
+ElseIf pLoc = 3 Then
+    If (currentSht.Range("AB" & game1).Value = vbNullString) And (currentSht.Range("AE" & game1).Value = vbNullString) Then
+        pLoss1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value
+        pWin1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value
+    ElseIf currentSht.Range("AE" & game1).Value = vbNullString Then
+        pLoss1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value + _
+                currentSht.Range("AB" & game1).Value
+        pWin1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value + _
+                currentSht.Range("AD" & game1).Value
+    Else
+        pLoss1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value + _
+                currentSht.Range("AB" & game1).Value + _
+                currentSht.Range("AE" & game1).Value
+        pWin1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value + _
+                currentSht.Range("AD" & game1).Value + _
+                currentSht.Range("AG" & game1).Value
+    End If
+    ' Player loc1 game two
+    If (currentSht.Range("AB" & game2).Value = vbNullString) And (currentSht.Range("AE" & game2).Value = vbNullString) Then
+        pLoss2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value
+        pWin2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value
+    ElseIf currentSht.Range("AE" & game2).Value = vbNullString Then
+        pLoss2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value + _
+                currentSht.Range("AB" & game2).Value
+        pWin2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value + _
+                currentSht.Range("AD" & game2).Value
+    Else
+        pLoss2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value + _
+                currentSht.Range("AB" & game2).Value + _
+                currentSht.Range("AE" & game2).Value
+        pWin2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value + _
+                currentSht.Range("AD" & game2).Value + _
+                currentSht.Range("AG" & game2).Value
+    End If
+    ' Game three for player on loc1
+    If (currentSht.Range("AB" & game3).Value = vbNullString) And (currentSht.Range("AE" & game3).Value = vbNullString) Then
+        pWin3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value
+        pLoss3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value
+    ElseIf currentSht.Range("AE" & game3).Value = vbNullString Then
+        pWin3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value + _
+                currentSht.Range("AB" & game3).Value
+        pLoss3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value + _
+                currentSht.Range("AD" & game3).Value
+    Else
+        pWin3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value + _
+                currentSht.Range("AB" & game3).Value + _
+                currentSht.Range("AE" & game3).Value
+        pLoss3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value + _
+                currentSht.Range("AD" & game3).Value + _
+                currentSht.Range("AG" & game3).Value
+    End If
+    getRatio = (pWin1 + pWin2 + pWin3) / (pLoss1 + pLoss2 + pLoss3)
+    Exit Function
+ElseIf pLoc = 4 Then
+    ' Player game one
+    If (currentSht.Range("AB" & game1).Value = vbNullString) And (currentSht.Range("AE" & game1).Value = vbNullString) Then
+        pLoss1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value
+        pWin1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value
+    ElseIf currentSht.Range("AE" & game1).Value = vbNullString Then
+        pLoss1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value + _
+                currentSht.Range("AB" & game1).Value
+        pWin1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value + _
+                currentSht.Range("AD" & game1).Value
+    Else
+        pLoss1 = currentSht.Range("S" & game1).Value + _
+                currentSht.Range("V" & game1).Value + _
+                currentSht.Range("Y" & game1).Value + _
+                currentSht.Range("AB" & game1).Value + _
+                currentSht.Range("AE" & game1).Value
+        pWin1 = currentSht.Range("U" & game1).Value + _
+                currentSht.Range("X" & game1).Value + _
+                currentSht.Range("AA" & game1).Value + _
+                currentSht.Range("AD" & game1).Value + _
+                currentSht.Range("AG" & game1).Value
+    End If
+    ' Player loc game two
+    If (currentSht.Range("AB" & game2).Value = vbNullString) And (currentSht.Range("AE" & game2).Value = vbNullString) Then
+        pWin2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value
+        pLoss2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value
+    ElseIf currentSht.Range("AE" & game2).Value = vbNullString Then
+        pWin2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value + _
+                currentSht.Range("AB" & game2).Value
+        pLoss2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value + _
+                currentSht.Range("AD" & game2).Value
+    Else
+        pWin2 = currentSht.Range("S" & game2).Value + _
+                currentSht.Range("V" & game2).Value + _
+                currentSht.Range("Y" & game2).Value + _
+                currentSht.Range("AB" & game2).Value + _
+                currentSht.Range("AE" & game2).Value
+        pLoss2 = currentSht.Range("U" & game2).Value + _
+                currentSht.Range("X" & game2).Value + _
+                currentSht.Range("AA" & game2).Value + _
+                currentSht.Range("AD" & game2).Value + _
+                currentSht.Range("AG" & game2).Value
+    End If
+    ' Game three for player on loc1
+    If (currentSht.Range("AB" & game3).Value = vbNullString) And (currentSht.Range("AE" & game3).Value = vbNullString) Then
+        pLoss3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value
+        pWin3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value
+    ElseIf currentSht.Range("AE" & game3).Value = vbNullString Then
+        pLoss3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value + _
+                currentSht.Range("AB" & game3).Value
+        pWin3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value + _
+                currentSht.Range("AD" & game3).Value
+    Else
+        pLoss3 = currentSht.Range("S" & game3).Value + _
+                currentSht.Range("V" & game3).Value + _
+                currentSht.Range("Y" & game3).Value + _
+                currentSht.Range("AB" & game3).Value + _
+                currentSht.Range("AE" & game3).Value
+        pWin3 = currentSht.Range("U" & game3).Value + _
+                currentSht.Range("X" & game3).Value + _
+                currentSht.Range("AA" & game3).Value + _
+                currentSht.Range("AD" & game3).Value + _
+                currentSht.Range("AG" & game3).Value
+    End If
+    getRatio = (pWin1 + pWin2 + pWin3) / (pLoss1 + pLoss2 + pLoss3)
+    Exit Function
+    
+End If
+
+End Function
+
+Sub doPoint(checkRow1, checkRow2, checkRow3, table As Integer)
+
+Dim currentSht As Worksheet
+Dim position1, position2, position3 As String
+Dim pRatio1, pRatio2, pRatio3 As Double
+Dim pWin1, pWin2 As Integer
+Dim pLoss1, pLoss2, pLoss3 As Integer
+Dim game1, game2 As Integer
+
+Set currentSht = Sheets("Predtekmovanje")
+
+game1 = checkRow1 + 13
+game2 = checkRow1 + 15
+
+' Calculate point ratio for player one game one
+If (currentSht.Range("AB" & game1).Value = vbNullString) And (currentSht.Range("AE" & game1).Value = vbNullString) Then
+    pWin1 = currentSht.Range("S" & game1).Value + _
+            currentSht.Range("V" & game1).Value + _
+            currentSht.Range("Y" & game1).Value
+    pLoss1 = currentSht.Range("U" & game1).Value + _
+            currentSht.Range("X" & game1).Value + _
+            currentSht.Range("AA" & game1).Value
+ElseIf currentSht.Range("AE" & game1).Value = vbNullString Then
+    pWin1 = currentSht.Range("S" & game1).Value + _
+            currentSht.Range("V" & game1).Value + _
+            currentSht.Range("Y" & game1).Value + _
+            currentSht.Range("AB" & game1).Value
+    pLoss1 = currentSht.Range("U" & game1).Value + _
+            currentSht.Range("X" & game1).Value + _
+            currentSht.Range("AA" & game1).Value + _
+            currentSht.Range("AD" & game1).Value
+Else
+    pWin1 = currentSht.Range("S" & game1).Value + _
+            currentSht.Range("V" & game1).Value + _
+            currentSht.Range("Y" & game1).Value + _
+            currentSht.Range("AB" & game1).Value + _
+            currentSht.Range("AE" & game1).Value
+    pLoss1 = currentSht.Range("U" & game1).Value + _
+            currentSht.Range("X" & game1).Value + _
+            currentSht.Range("AA" & game1).Value + _
+            currentSht.Range("AD" & game1).Value + _
+            currentSht.Range("AG" & game1).Value
+End If
+
+' Calculate point ratio for player one game two
+If (currentSht.Range("AB" & game2).Value = vbNullString) And (currentSht.Range("AE" & game2).Value = vbNullString) Then
+    pLoss2 = currentSht.Range("S" & game2).Value + _
+            currentSht.Range("V" & game2).Value + _
+            currentSht.Range("Y" & game2).Value
+    pWin2 = currentSht.Range("U" & game2).Value + _
+            currentSht.Range("X" & game2).Value + _
+            currentSht.Range("AA" & game2).Value
+ElseIf currentSht.Range("AE" & game2).Value = vbNullString Then
+    pLoss2 = currentSht.Range("S" & game2).Value + _
+            currentSht.Range("V" & game2).Value + _
+            currentSht.Range("Y" & game2).Value + _
+            currentSht.Range("AB" & game2).Value
+    pWin2 = currentSht.Range("U" & game2).Value + _
+            currentSht.Range("X" & game2).Value + _
+            currentSht.Range("AA" & game2).Value + _
+            currentSht.Range("AD" & game2).Value
+Else
+    pLoss2 = currentSht.Range("S" & game2).Value + _
+            currentSht.Range("V" & game2).Value + _
+            currentSht.Range("Y" & game2).Value + _
+            currentSht.Range("AB" & game2).Value + _
+            currentSht.Range("AE" & game2).Value
+    pWin2 = currentSht.Range("U" & game2).Value + _
+            currentSht.Range("X" & game2).Value + _
+            currentSht.Range("AA" & game2).Value + _
+            currentSht.Range("AD" & game2).Value + _
+            currentSht.Range("AG" & game2).Value
+End If
+pRatio1 = (pWin1 + pWin2) / (pLoss1 + pLoss2)
+
+game1 = checkRow1 + 11
+game2 = checkRow1 + 13
+pWin1 = 0
+pWin2 = 0
+pLoss1 = 0
+pLoss2 = 0
+
+' Calculate point ratio for player two game one
+If (currentSht.Range("AB" & game1).Value = vbNullString) And (currentSht.Range("AE" & game1).Value = vbNullString) Then
+    pWin1 = currentSht.Range("S" & game1).Value + _
+            currentSht.Range("V" & game1).Value + _
+            currentSht.Range("Y" & game1).Value
+    pLoss1 = currentSht.Range("U" & game1).Value + _
+            currentSht.Range("X" & game1).Value + _
+            currentSht.Range("AA" & game1).Value
+ElseIf currentSht.Range("AE" & game1).Value = vbNullString Then
+    pWin1 = currentSht.Range("S" & game1).Value + _
+            currentSht.Range("V" & game1).Value + _
+            currentSht.Range("Y" & game1).Value + _
+            currentSht.Range("AB" & game1).Value
+    pLoss1 = currentSht.Range("U" & game1).Value + _
+            currentSht.Range("X" & game1).Value + _
+            currentSht.Range("AA" & game1).Value + _
+            currentSht.Range("AD" & game1).Value
+Else
+    pWin1 = currentSht.Range("S" & game1).Value + _
+            currentSht.Range("V" & game1).Value + _
+            currentSht.Range("Y" & game1).Value + _
+            currentSht.Range("AB" & game1).Value + _
+            currentSht.Range("AE" & game1).Value
+    pLoss1 = currentSht.Range("U" & game1).Value + _
+            currentSht.Range("X" & game1).Value + _
+            currentSht.Range("AA" & game1).Value + _
+            currentSht.Range("AD" & game1).Value + _
+            currentSht.Range("AG" & game1).Value
+End If
+
+' Calculate point ratio for player one game two
+If (currentSht.Range("AB" & game2).Value = vbNullString) And (currentSht.Range("AE" & game2).Value = vbNullString) Then
+    pLoss2 = currentSht.Range("S" & game2).Value + _
+            currentSht.Range("V" & game2).Value + _
+            currentSht.Range("Y" & game2).Value
+    pWin2 = currentSht.Range("U" & game2).Value + _
+            currentSht.Range("X" & game2).Value + _
+            currentSht.Range("AA" & game2).Value
+ElseIf currentSht.Range("AE" & game2).Value = vbNullString Then
+    pLoss2 = currentSht.Range("S" & game2).Value + _
+            currentSht.Range("V" & game2).Value + _
+            currentSht.Range("Y" & game2).Value + _
+            currentSht.Range("AB" & game2).Value
+    pWin2 = currentSht.Range("U" & game2).Value + _
+            currentSht.Range("X" & game2).Value + _
+            currentSht.Range("AA" & game2).Value + _
+            currentSht.Range("AD" & game2).Value
+Else
+    pLoss2 = currentSht.Range("S" & game2).Value + _
+            currentSht.Range("V" & game2).Value + _
+            currentSht.Range("Y" & game2).Value + _
+            currentSht.Range("AB" & game2).Value + _
+            currentSht.Range("AE" & game2).Value
+    pWin2 = currentSht.Range("U" & game2).Value + _
+            currentSht.Range("X" & game2).Value + _
+            currentSht.Range("AA" & game2).Value + _
+            currentSht.Range("AD" & game2).Value + _
+            currentSht.Range("AG" & game2).Value
+End If
+pRatio2 = (pWin1 + pWin2) / (pLoss1 + pLoss2)
+
+game1 = checkRow1 + 15
+game2 = checkRow1 + 11
+pWin1 = 0
+pWin2 = 0
+pLoss1 = 0
+pLoss2 = 0
+
+' Calculate point ratio for player two game one
+If (currentSht.Range("AB" & game1).Value = vbNullString) And (currentSht.Range("AE" & game1).Value = vbNullString) Then
+    pWin1 = currentSht.Range("S" & game1).Value + _
+            currentSht.Range("V" & game1).Value + _
+            currentSht.Range("Y" & game1).Value
+    pLoss1 = currentSht.Range("U" & game1).Value + _
+            currentSht.Range("X" & game1).Value + _
+            currentSht.Range("AA" & game1).Value
+ElseIf currentSht.Range("AE" & game1).Value = vbNullString Then
+    pWin1 = currentSht.Range("S" & game1).Value + _
+            currentSht.Range("V" & game1).Value + _
+            currentSht.Range("Y" & game1).Value + _
+            currentSht.Range("AB" & game1).Value
+    pLoss1 = currentSht.Range("U" & game1).Value + _
+            currentSht.Range("X" & game1).Value + _
+            currentSht.Range("AA" & game1).Value + _
+            currentSht.Range("AD" & game1).Value
+Else
+    pWin1 = currentSht.Range("S" & game1).Value + _
+            currentSht.Range("V" & game1).Value + _
+            currentSht.Range("Y" & game1).Value + _
+            currentSht.Range("AB" & game1).Value + _
+            currentSht.Range("AE" & game1).Value
+    pLoss1 = currentSht.Range("U" & game1).Value + _
+            currentSht.Range("X" & game1).Value + _
+            currentSht.Range("AA" & game1).Value + _
+            currentSht.Range("AD" & game1).Value + _
+            currentSht.Range("AG" & game1).Value
+End If
+
+' Calculate point ratio for player three game two
+If (currentSht.Range("AB" & game2).Value = vbNullString) And (currentSht.Range("AE" & game2).Value = vbNullString) Then
+    pLoss2 = currentSht.Range("S" & game2).Value + _
+            currentSht.Range("V" & game2).Value + _
+            currentSht.Range("Y" & game2).Value
+    pWin2 = currentSht.Range("U" & game2).Value + _
+            currentSht.Range("X" & game2).Value + _
+            currentSht.Range("AA" & game2).Value
+ElseIf currentSht.Range("AE" & game2).Value = vbNullString Then
+    pLoss2 = currentSht.Range("S" & game2).Value + _
+            currentSht.Range("V" & game2).Value + _
+            currentSht.Range("Y" & game2).Value + _
+            currentSht.Range("AB" & game2).Value
+    pWin2 = currentSht.Range("U" & game2).Value + _
+            currentSht.Range("X" & game2).Value + _
+            currentSht.Range("AA" & game2).Value + _
+            currentSht.Range("AD" & game2).Value
+Else
+    pLoss2 = currentSht.Range("S" & game2).Value + _
+            currentSht.Range("V" & game2).Value + _
+            currentSht.Range("Y" & game2).Value + _
+            currentSht.Range("AB" & game2).Value + _
+            currentSht.Range("AE" & game2).Value
+    pWin2 = currentSht.Range("U" & game2).Value + _
+            currentSht.Range("X" & game2).Value + _
+            currentSht.Range("AA" & game2).Value + _
+            currentSht.Range("AD" & game2).Value + _
+            currentSht.Range("AG" & game2).Value
+End If
+pRatio3 = (pWin1 + pWin2) / (pLoss1 + pLoss2)
+' MsgBox pRatio3
+
+' Assign places to members of a table
+If (pRatio1 = pRatio2) And (pRatio2 = pRatio3) Then
+    MsgBox "Igralci v tabeli " & table & " imajo enako število točk!"
+ElseIf (pRatio1 > pRatio2) And (pRatio2 > pRatio3) Then
+    position1 = "1."
+    position2 = "2."
+    position3 = "3."
+    currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+    currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+    currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+ElseIf (pRatio1 > pRatio2) And (pRatio2 < pRatio3) Then
+    position1 = "1."
+    position2 = "3."
+    position3 = "2."
+    currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+    currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+    currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+ElseIf (pRatio2 > pRatio1) And (pRatio1 > pRatio3) Then
+    position1 = "2."
+    position2 = "1."
+    position3 = "3."
+    currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+    currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+    currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+ElseIf (pRatio2 > pRatio3) And (pRatio3 > pRatio1) Then
+    position1 = "2."
+    position2 = "3."
+    position3 = "1."
+    currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+    currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+    currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+ElseIf (pRatio3 > pRatio1) And (pRatio1 > pRatio2) Then
+    position1 = "3."
+    position2 = "1."
+    position3 = "2."
+    currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+    currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+    currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+ElseIf (pRatio3 > pRatio2) And (pRatio2 > pRatio1) Then
+    position1 = "3."
+    position2 = "2."
+    position3 = "1."
+    currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+    currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+    currentSht.Range("AH" & checkRow3).Value = CStr(position3)
+End If
+
+End Sub
+
+Sub do4(checkPos1, checkPos2, checkPos3, checkPos4, checkRow1, checkRow2, checkRow3, checkRow4 As Integer)
+' Description: sub checks for a situation when 4 players have in pairs the same position and clasify them based on
+'           a match between the two players. The check is done for every possible pair.
+' NOTE: at the moment, the position transcription does not include the . after the position
+
+Dim currentSht As Worksheet
+Dim position1, position2 As String
+
+Set currentSht = Sheets("Predtekmovanje")
+
+    If checkPos1 = checkPos2 Then
+        If checkPos1 = 1 Then
+            If currentSht.Range("S" & checkRow1).Value > currentSht.Range("U" & checkRow1).Value Then
+                position1 = "1."
+                position2 = "2."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+            ElseIf currentSht.Range("S" & checkRow1).Value < currentSht.Range("U" & checkRow1).Value Then
+                position1 = "2."
+                position2 = "1."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+            End If
+        ElseIf checkPos1 = 3 Then
+            If currentSht.Range("S" & checkRow1).Value > currentSht.Range("U" & checkRow1).Value Then
+                position1 = "3."
+                position2 = "4."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+            ElseIf currentSht.Range("S" & checkRow1).Value < currentSht.Range("U" & checkRow1).Value Then
+                position1 = "4."
+                position2 = "3."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow2).Value = CStr(position2)
+            End If
+        End If
+    ElseIf checkPos1 = checkPos3 Then
+        If checkPos1 = 1 Then
+            If currentSht.Range("V" & checkRow1).Value > currentSht.Range("X" & checkRow1).Value Then
+                position1 = "1."
+                position2 = "2."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow3).Value = CStr(position2)
+            ElseIf currentSht.Range("V" & checkRow1).Value < currentSht.Range("X" & checkRow1).Value Then
+                position1 = "2."
+                position2 = "1."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow3).Value = CStr(position2)
+            End If
+        ElseIf checkPos1 = 3 Then
+            If currentSht.Range("V" & checkRow1).Value > currentSht.Range("X" & checkRow1).Value Then
+                position1 = "3."
+                position2 = "4."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow3).Value = CStr(position2)
+            ElseIf currentSht.Range("V" & checkRow1).Value < currentSht.Range("X" & checkRow1).Value Then
+                position1 = "4."
+                position2 = "3."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow3).Value = CStr(position2)
+            End If
+        End If
+        
+    ElseIf checkPos1 = checkPos4 Then
+        If checkPos1 = 1 Then
+            If currentSht.Range("Y" & checkRow1).Value > currentSht.Range("AA" & checkRow1).Value Then
+                position1 = "1."
+                position2 = "2."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            ElseIf currentSht.Range("Y" & checkRow1).Value < currentSht.Range("AA" & checkRow1).Value Then
+                position1 = "2."
+                position2 = "1."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            End If
+        ElseIf checkPos1 = 3 Then
+            If currentSht.Range("Y" & checkRow1).Value > currentSht.Range("AA" & checkRow1).Value Then
+                position1 = "3."
+                position2 = "4."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            ElseIf currentSht.Range("Y" & checkRow1).Value < currentSht.Range("AA" & checkRow1).Value Then
+                position1 = "4."
+                position2 = "3."
+                currentSht.Range("AH" & checkRow1).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            End If
+        End If
+    End If
+    If checkPos2 = checkPos3 Then
+        If checkPos2 = 1 Then
+            If currentSht.Range("V" & checkRow2).Value > currentSht.Range("X" & checkRow2).Value Then
+                position1 = "1."
+                position2 = "2."
+                currentSht.Range("AH" & checkRow2).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow3).Value = CStr(position2)
+            ElseIf currentSht.Range("V" & checkRow2).Value < currentSht.Range("X" & checkRow2).Value Then
+                position1 = "2."
+                position2 = "1."
+                currentSht.Range("AH" & checkRow2).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow3).Value = CStr(position2)
+            End If
+        ElseIf checkPos2 = 3 Then
+            If currentSht.Range("V" & checkRow2).Value > currentSht.Range("X" & checkRow2).Value Then
+                position1 = "3."
+                position2 = "4."
+                currentSht.Range("AH" & checkRow2).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow3).Value = CStr(position2)
+            ElseIf currentSht.Range("V" & checkRow2).Value < currentSht.Range("X" & checkRow2).Value Then
+                position1 = "4."
+                position2 = "3."
+                currentSht.Range("AH" & checkRow2).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow3).Value = CStr(position2)
+            End If
+        End If
+    ElseIf checkPos2 = checkPos4 Then
+        If checkPos2 = 1 Then
+            If currentSht.Range("Y" & checkRow2).Value > currentSht.Range("AA" & checkRow2).Value Then
+                position1 = "1."
+                position2 = "2."
+                currentSht.Range("AH" & checkRow2).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            ElseIf currentSht.Range("Y" & checkRow2).Value < currentSht.Range("AA" & checkRow2).Value Then
+                position1 = "2."
+                position2 = "1."
+                currentSht.Range("AH" & checkRow2).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            End If
+        ElseIf checkPos2 = 3 Then
+            If currentSht.Range("Y" & checkRow2).Value > currentSht.Range("AA" & checkRow2).Value Then
+                position1 = "3."
+                position2 = "4."
+                currentSht.Range("AH" & checkRow2).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            ElseIf currentSht.Range("Y" & checkRow2).Value < currentSht.Range("AA" & checkRow2).Value Then
+                position1 = "4."
+                position2 = "3."
+                currentSht.Range("AH" & checkRow2).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            End If
+        End If
+    End If
+    If checkPos3 = checkPos4 Then
+        If checkPos3 = 1 Then
+            If currentSht.Range("Y" & checkRow3).Value > currentSht.Range("AA" & checkRow3).Value Then
+                position1 = "1."
+                position2 = "2."
+                currentSht.Range("AH" & checkRow3).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            ElseIf currentSht.Range("Y" & checkRow3).Value < currentSht.Range("AA" & checkRow3).Value Then
+                position1 = "2."
+                position2 = "1."
+                currentSht.Range("AH" & checkRow3).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            End If
+        ElseIf checkPos3 = 3 Then
+            If currentSht.Range("Y" & checkRow3).Value > currentSht.Range("AA" & checkRow3).Value Then
+                position1 = "3."
+                position2 = "4."
+                currentSht.Range("AH" & checkRow3).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            ElseIf currentSht.Range("Y" & checkRow3).Value < currentSht.Range("AA" & checkRow3).Value Then
+                position1 = "4."
+                position2 = "3."
+                currentSht.Range("AH" & checkRow3).Value = CStr(position1)
+                currentSht.Range("AH" & checkRow4).Value = CStr(position2)
+            End If
+        End If
+    
+    End If
+    
+End Sub
+
